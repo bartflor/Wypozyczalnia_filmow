@@ -1,8 +1,10 @@
-import edu.agh.io.Movies;
+import edu.agh.io.MoviesRent;
+
+import java.io.IOException;
 
 public class Main {
-  public static void main(String[] args) {
-    Movies movies = new Movies();
-    movies.run();
+  public static void main(String[] args) throws IOException {
+    MoviesRent moviesRent = new MoviesRent();
+    moviesRent.run();
   }
 }
