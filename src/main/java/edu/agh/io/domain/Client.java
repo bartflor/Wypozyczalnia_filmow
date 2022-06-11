@@ -3,6 +3,7 @@ package edu.agh.io.domain;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -11,5 +12,5 @@ public class Client {
   private String email;
   private String password;
   private List<Integer> ClientMovies;
-  private List<Payment> paymentList;
+  @Builder.Default private List<Payment> paymentList = new ArrayList<>();
 }

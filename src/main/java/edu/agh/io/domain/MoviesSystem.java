@@ -1,100 +1,140 @@
 package edu.agh.io.domain;
 
-import edu.agh.io.domain.Ui.Mode;
+import edu.agh.io.repository.Repository;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
-import static edu.agh.io.domain.Ui.Mode.ADMIN;
 import static java.util.stream.Collectors.toList;
 
 public class MoviesSystem {
   Ui ui;
-  List<Movie> movieList;
-  List<Client> clients;
-  List<Ticket> ticketList;
+  Repository repository;
 
   public MoviesSystem(Ui ui) {
     this.ui = ui;
-    movieList = new ArrayList<>();
-    movieList.add(Movie.builder().id(0).title("Władca pierścieni").cost(100).build());
-    movieList.add(Movie.builder().id(1).title("Harry Potter").cost(23).build());
-    movieList.add(Movie.builder().id(2).title("Szczęki 2").cost(41).build());
-    movieList.add(Movie.builder().id(3).title("Rocky 4").cost(244).build());
-    movieList.add(Movie.builder().id(4).title("Thor").cost(5).build());
-
-    clients = new ArrayList<>();
-    ArrayList<Integer> clientMovies = new ArrayList<>();
-    clientMovies.add(1);
-    clientMovies.add(3);
-    clients.add(
-        Client.builder().email("Jan@mail.com").ClientMovies(clientMovies).password("pass").build());
+    repository = new Repository();
   }
 
   public void run() throws IOException {
-    Mode runningMode = ui.init();
-    if (runningMode == ADMIN) {
-      runAdminMode();
-    } else {
-      runClientMode();
-    }
+    ui.init();
+    runClientMode();
   }
 
   private void runClientMode() throws IOException {
-    Client client = findClient(login());
+    Client client = login();
+    while (Objects.isNull(client)){
+      ui.printMsg("Błąd logowania - spróbuj ponownie");
+      client = login();
+    }
     boolean exit = false;
     while (!exit) {
       switch (ui.clientMenu()) {
         case 1:
-          ui.displayMovies(getClientMovies(client));
-          int watchMovieId = ui.chooseMovie();
-          Movie movie = findMovie(watchMovieId);
-          if (client.getClientMovies().contains(movie.getId())) {
-            ui.playMovie(movie);
-          } else {
-            ui.printMsg("Nie poprawny numer filmu");
-          }
+          watchMovie(client);
           break;
         case 2:
-          ui.displayMovies(movieList);
-          int rentMovieId = ui.chooseMovie();
-          Movie rentMovie = findMovie(rentMovieId);
-          client.getClientMovies().add(rentMovieId);
-          ui.printMsg("Wypożyczono film: " + rentMovie);
+          processMovieRent(client);
           break;
         case 3:
           ui.displayPayments(client.getPaymentList());
           break;
         default:
           exit = true;
+          ui.printMsg("Dziękujemy za skorzystanie z naszej wypożyczalni.");
           break;
       }
     }
   }
 
-  private Movie findMovie(int movieId) {
-    return movieList.stream().filter(movie -> movie.getId() == movieId).collect(toList()).get(0);
+  private void watchMovie(Client client) {
+    ui.displayMovies(getClientMovies(client));
+    int watchMovieId = ui.chooseMovie();
+    Optional<Movie> movie = findMovie(watchMovieId);
+    if (movie.isPresent() && client.getClientMovies().contains(movie.get().getId())) {
+      ui.playMovie(movie.get());
+    } else {
+      ui.printMsg("Nie poprawny numer filmu");
+    }
+  }
+
+  private void processMovieRent(Client client) {
+    List<Movie> movesToRentForClient = getMovesToRentForClient(client);
+    if(movesToRentForClient.isEmpty()){
+      ui.printMsg("Nie mamy nowych filmów dla Ciebie");
+    } else {
+      ui.displayMovies(movesToRentForClient);
+      int rentMovieId = ui.chooseMovie();
+      if (movesToRentForClient.stream().map(Movie::getId).anyMatch(id -> id == rentMovieId)) {
+        processMovieRent(client, rentMovieId);
+      } else {
+        ui.printMsg("Nie poprawny numer filmu");
+      }
+    }
+  }
+  
+  private void processMovieRent(Client client, int rentMovieId) {
+    Optional<Movie> rentMovie = findMovie(rentMovieId);
+    if (rentMovie.isPresent()) {
+      double rentMovieCost = rentMovie.get().getCost();
+      ui.processPayment(rentMovieCost);
+      if (executePayment()) {
+        client.getClientMovies().add(rentMovieId);
+        client
+            .getPaymentList()
+            .add(
+                Payment.builder()
+                    .cost(rentMovieCost)
+                    .date(LocalDate.now())
+                    .movieId(rentMovieId)
+                    .type("APPROVED")
+                    .build());
+        ui.printMsg("Wypożyczono film: " + rentMovie);
+      } else {
+        ui.printMsg("Błąd weryfikacji płatności");
+      }
+    } else {
+      ui.printMsg("Błędny numer filmu");
+    }
+  }
+  
+  private List<Movie> getMovesToRentForClient(Client client) {
+    return repository.getMovieList().stream()
+        .filter(m -> !client.getClientMovies().contains(m.getId()))
+        .collect(toList());
+  }
+
+  private boolean executePayment() {
+    // External provider mock
+    System.out.println("\t---EXTERNAL PROVIDER PAYMENT CONFIRM---");
+    return true;
+  }
+
+  private Optional<Movie> findMovie(int movieId) {
+    return repository.getMovieList().stream()
+        .filter(movie -> movie.getId() == movieId)
+        .findAny();
   }
 
   private List<Movie> getClientMovies(Client client) {
-    return movieList.stream()
+    return repository.getMovieList().stream()
         .filter(movie -> client.getClientMovies().contains(movie.id))
         .collect(toList());
   }
 
-  private Client findClient(String login) {
-    return clients.stream()
+  private Optional<Client> findClient(String login) {
+    return repository.getClients().stream()
         .filter(client -> client.getEmail().equals(login))
-        .findAny()
-        .orElse(clients.get(0));
+        .findAny();
   }
 
-  private String login() throws IOException {
-    return ui.getLogin();
-  }
-
-  private void runAdminMode() throws IOException {
-    login();
+  private Client login() throws IOException {
+    Optional<Client> client = findClient(ui.getLogin());
+    return client.isPresent() && client.get().getPassword().equals(ui.getPassword())
+            ? client.get()
+            : null;
   }
 }
