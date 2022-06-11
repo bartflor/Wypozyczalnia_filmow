@@ -5,9 +5,9 @@ import edu.agh.io.domain.Ui.Mode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static edu.agh.io.domain.Ui.Mode.ADMIN;
+import static java.util.stream.Collectors.toList;
 
 public class MoviesSystem {
   Ui ui;
@@ -25,12 +25,11 @@ public class MoviesSystem {
     movieList.add(Movie.builder().id(4).title("Thor").cost(5).build());
 
     clients = new ArrayList<>();
+    ArrayList<Integer> clientMovies = new ArrayList<>();
+    clientMovies.add(1);
+    clientMovies.add(3);
     clients.add(
-        Client.builder()
-            .email("Jan@mail.com")
-            .password("pass")
-            .ClientMovies(List.of(1, 3))
-            .build());
+        Client.builder().email("Jan@mail.com").ClientMovies(clientMovies).password("pass").build());
   }
 
   public void run() throws IOException {
@@ -49,9 +48,20 @@ public class MoviesSystem {
       switch (ui.clientMenu()) {
         case 1:
           ui.displayMovies(getClientMovies(client));
+          int watchMovieId = ui.chooseMovie();
+          Movie movie = findMovie(watchMovieId);
+          if (client.getClientMovies().contains(movie.getId())) {
+            ui.playMovie(movie);
+          } else {
+            ui.printMsg("Nie poprawny numer filmu");
+          }
           break;
         case 2:
           ui.displayMovies(movieList);
+          int rentMovieId = ui.chooseMovie();
+          Movie rentMovie = findMovie(rentMovieId);4
+          client.getClientMovies().add(rentMovieId);
+          ui.printMsg("Wypożyczono film: " + rentMovie);
           break;
         case 3:
           ui.displayPayments(client.getPaymentList());
@@ -63,10 +73,14 @@ public class MoviesSystem {
     }
   }
 
+  private Movie findMovie(int movieId) {
+    return movieList.stream().filter(movie -> movie.getId() == movieId).collect(toList()).get(0);
+  }
+
   private List<Movie> getClientMovies(Client client) {
     return movieList.stream()
         .filter(movie -> client.getClientMovies().contains(movie.id))
-        .collect(Collectors.toList());
+        .collect(toList());
   }
 
   private Client findClient(String login) {

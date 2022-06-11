@@ -67,6 +67,32 @@ public class Console implements Ui {
     System.out.println(paymentList);
   }
   
+  @Override
+  public int chooseMovie() {
+    System.out.println("\n-----------------------------------");
+    System.out.println("\n----------Wybierz film:-----------");
+    try {
+      String movie = reader.readLine();
+      return parseInt(movie);
+    } catch (Exception e) {
+      System.out.println("\nBłędna opcja");
+      return chooseMovie();
+    }
+  }
+  
+  @Override
+  public void playMovie(Movie movie) {
+    System.out.println("~~~~~~~STREAM:"+movie.getTitle()+"~~~~~~~~~");
+    System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+    System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+  }
+  
+  @Override
+  public void printMsg(String msg) {
+    System.out.println("! :"+msg+" !");
+  }
+  
   private void adminMenu() {
     System.out.println("\n\tAdmin\n");
   }
