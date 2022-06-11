@@ -59,7 +59,7 @@ public class MoviesSystem {
         case 2:
           ui.displayMovies(movieList);
           int rentMovieId = ui.chooseMovie();
-          Movie rentMovie = findMovie(rentMovieId);4
+          Movie rentMovie = findMovie(rentMovieId);
           client.getClientMovies().add(rentMovieId);
           ui.printMsg("Wypożyczono film: " + rentMovie);
           break;
