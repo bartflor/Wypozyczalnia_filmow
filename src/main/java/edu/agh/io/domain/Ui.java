@@ -14,6 +14,12 @@ public interface Ui {
 	
 	void displayPayments(List<Payment> paymentList);
 	
+	int chooseMovie();
+	
+	void playMovie(Movie movieId);
+	
+	void printMsg(String msg);
+	
 	enum Mode{
 		CLIENT, ADMIN;
 	}
