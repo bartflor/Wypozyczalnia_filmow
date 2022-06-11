@@ -8,9 +8,8 @@ import java.util.List;
 @Builder
 @Data
 public class Client {
-  String name;
-  String email;
-  String password;
-  List<Integer> ClientMovies;
-  List<Payment> paymentList;
+  private String email;
+  private String password;
+  private List<Integer> ClientMovies;
+  private List<Payment> paymentList;
 }

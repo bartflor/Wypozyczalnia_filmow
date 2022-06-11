@@ -13,6 +13,7 @@ public class MoviesSystem {
   Ui ui;
   List<Movie> movieList;
   List<Client> clients;
+  List<Ticket> ticketList;
 
   public MoviesSystem(Ui ui) {
     this.ui = ui;
@@ -26,7 +27,6 @@ public class MoviesSystem {
     clients = new ArrayList<>();
     clients.add(
         Client.builder()
-            .name("Jan")
             .email("Jan@mail.com")
             .password("pass")
             .ClientMovies(List.of(1, 3))
@@ -65,13 +65,13 @@ public class MoviesSystem {
 
   private List<Movie> getClientMovies(Client client) {
     return movieList.stream()
-        .filter(movie -> client.ClientMovies.contains(movie.id))
+        .filter(movie -> client.getClientMovies().contains(movie.id))
         .collect(Collectors.toList());
   }
 
   private Client findClient(String login) {
     return clients.stream()
-        .filter(client -> client.getName().equals(login))
+        .filter(client -> client.getEmail().equals(login))
         .findAny()
         .orElse(clients.get(0));
   }
