@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface Ui {
-	Mode init() throws IOException;
+	void init() throws IOException;
 	
 	String getLogin() throws IOException;
 	
@@ -20,7 +20,7 @@ public interface Ui {
 	
 	void printMsg(String msg);
 	
-	enum Mode{
-		CLIENT, ADMIN;
-	}
+	void processPayment(double rentMovieCost);
+	
+	String getPassword() throws IOException;
 }
